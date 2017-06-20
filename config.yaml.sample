@@ -1,5 +1,5 @@
 usr: jenkins_username
 pwd: jenkins_password
 url: https://jenkins.url
-job: automation-6.2-tier1-rhel7
+job: automation-6.2-tier{0}-rhel{1}
 bld: lastCompletedBuild
