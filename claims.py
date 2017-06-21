@@ -12,9 +12,9 @@ with open("config.yaml", "r") as file:
     except yaml.YAMLERROR as exc:
         print(exc)
 
-#PARAMS = {u'tree': u'suites[cases[className,name,status,testActions[reason]]]{0}'}
 PARAMS = {u'tree': u'suites[cases[className,name,status,errorDetails,testActions[reason]]]{0}'}
 ep = [u'ui', u'api', u'cli']
+
 
 def fetch_test_report(url, job, build):
     bld_req = requests.get(
@@ -28,7 +28,13 @@ def fetch_test_report(url, job, build):
     )
 
     if bld_req.status_code == 200:
-        return(json.loads(bld_req.text)['suites'][0]['cases'])
+        cases = json.loads(bld_req.text)['suites'][0]['cases']
+        for c in cases:
+            className = c['className'].split('.')[-1]
+            testPath = '.'.join(c['className'].split('.')[:-1])
+            c['url'] = u'{0}/job/{1}/{2}/testReport/junit/{3}/{4}/{5}'.format(url, job, build, testPath, className, c['name'])
+
+        return(cases)
 
 
 def fetch_all_reports(job=None, build=None):
@@ -37,13 +43,13 @@ def fetch_all_reports(job=None, build=None):
     if build is None:
         build = config['bld']
     results = {}
-    for i in range(1, 5):
-        results['T{}'.format(i)] = {}
+    for i in list(reversed(range(1, 5))):
+        results['t{}'.format(i)] = {}
         for j in range(6, 8):
             job1 = job.format(i, j)
             tr = fetch_test_report(config['url'], job1, build)
             fails = parse_fails(tr)
-            results['T{}'.format(i)]['el{}'.format(j)] = fails
+            results['t{}'.format(i)]['el{}'.format(j)] = fails
     return(results)
 
 
@@ -80,18 +86,10 @@ def get_endpoints_failure_ratio(total, fails):
     return {i: (f[i] / t[i]) * 100 for i in ep}
 
 
-def claim(test, reason, sticky=False, url=None, job=None, build=None):
+def claim(test, reason, sticky=False):
     # json={"assignee": "", "reason": "bot", "sticky": false}
-    className = test['className'].split('.')[-1]
-    testPath = '.'.join(test['className'].split('.')[:-1])
-    if url is None:
-        url = config['url']
-    if job is None:
-        job = config['job']
-    if build is None:
-        build = config['bld']
     claim_req = requests.post(
-        u'{0}/job/{1}/{2}/testReport/junit/{3}/{4}/{5}/claim/claim'.format(url, job, build, testPath, className, test['name']),
+        u'{0}/claim/claim'.format(test['url']),
         auth=requests.auth.HTTPBasicAuth(
             config['usr'],
             config['pwd']
