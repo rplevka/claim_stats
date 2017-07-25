@@ -12,7 +12,9 @@ with open("config.yaml", "r") as file:
     except yaml.YAMLERROR as exc:
         print(exc)
 
-PARAMS = {u'tree': u'suites[cases[className,name,status,errorDetails,testActions[reason]]]{0}'}
+PARAMS = {
+    u'tree': u'suites[cases[className,name,status,errorDetails,testActions[reason]]]{0}'
+    }
 ep = [u'ui', u'api', u'cli']
 
 
@@ -45,10 +47,10 @@ def fetch_all_reports(job=None, build=None):
     results = {}
     for i in list(reversed(range(1, 5))):
         results['t{}'.format(i)] = {}
-        for j in range(6, 8):
+        for j in [6, 7]:
             job1 = job.format(i, j)
             tr = fetch_test_report(config['url'], job1, build)
-            fails = parse_fails(tr)
+            fails = tr#parse_fails(tr)
             results['t{}'.format(i)]['el{}'.format(j)] = fails
     return(results)
 
@@ -64,10 +66,14 @@ def parse_fails(bld):
 def parse_reasons(fails):
     reasons = {}
     for f in fails:
-        if reasons.get(str(f['testActions'][0]['reason'])):
-            reasons[str(f['testActions'][0]['reason'])] += 1
+        if(f['testActions'][0]['reason']):
+            reason = unicode(f['testActions'][0]['reason'])
         else:
-            reasons[str(f['testActions'][0]['reason'])] = 1
+            reason = unicode(f.get('errorDetails'))
+        if reasons.get(reason):
+            reasons[reason] += 1
+        else:
+            reasons[reason] = 1
     return(reasons)
 
 
