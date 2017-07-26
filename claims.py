@@ -1,7 +1,12 @@
 from __future__ import division
 import json
+import logging
+import re
 import requests
 import yaml
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 requests.packages.urllib3.disable_warnings()
 config = {}
@@ -69,13 +74,19 @@ def load_rules():
             file.close()
 
 
-def parse_reasons(fails):
+def parse_reasons(fails, fallback=False):
+    ''' parses the claim reasons from the given list of tests
+
+    :param fails: An input list of tests
+    :param fallback: Whether to replace the reason by
+        the 'ErrorDetails' field if 'reason' is None
+    '''
     reasons = {}
     for f in fails:
-        if(f['testActions'][0]['reason']):
-            reason = unicode(f['testActions'][0]['reason'])
-        else:
+        if(fallback and not f['testActions'][0]['reason']):
             reason = unicode(f.get('errorDetails'))
+        else:
+            reason = unicode(f['testActions'][0]['reason'])
         if reasons.get(reason):
             reasons[reason] += 1
         else:
@@ -99,7 +110,15 @@ def get_endpoints_failure_ratio(total, fails):
 
 
 def claim(test, reason, sticky=False):
-    # json={"assignee": "", "reason": "bot", "sticky": false}
+    '''Claims a given test with a given reason
+
+    :param test: a dict test representation (need to contain the 'url' key)
+
+    :param reason: a string - reason
+
+    :param sticky: whether to make the claim sticky (False by default)
+    '''
+    logger.info('claiming {0} with reason: {1}'.format(test, reason))
     claim_req = requests.post(
         u'{0}/claim/claim'.format(test['url']),
         auth=requests.auth.HTTPBasicAuth(
@@ -118,4 +137,5 @@ def claim(test, reason, sticky=False):
 def claim_by_rules(fails, rules):
     for rule in rules:
         for fail in [i for i in fails if re.search(rule['pattern'], i['errorDetails'])]:
-            claim(fail, rules['reason'])
+            logger.info(u'{0} matching pattern: {1}'.format(fail['name'], rule['pattern']))
+            claim(fail, rule['reason'])
