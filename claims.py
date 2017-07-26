@@ -50,7 +50,7 @@ def fetch_all_reports(job=None, build=None):
         for j in [6, 7]:
             job1 = job.format(i, j)
             tr = fetch_test_report(config['url'], job1, build)
-            fails = tr#parse_fails(tr)
+            fails = tr #parse_fails(tr)
             results['t{}'.format(i)]['el{}'.format(j)] = fails
     return(results)
 
@@ -61,6 +61,12 @@ def parse_fails(bld):
 # fetch_test_report(config['url'], config['job'], config['bld'])
 # fetch the failed tests with claim reasons
 # bld = fetch_test_report(config['url'], config['job'], config['build'])
+
+
+def load_rules():
+        with open('kb.json', 'r') as file:
+            return json.loads(file.read())
+            file.close()
 
 
 def parse_reasons(fails):
@@ -104,4 +110,12 @@ def claim(test, reason, sticky=False):
         allow_redirects=False,
         verify=False
     )
+    # fixme: do a request result verification
+    test['testActions'][0]['reason'] = reason
     return(claim_req)
+
+
+def claim_by_rules(fails, rules):
+    for rule in rules:
+        for fail in [i for i in fails if re.search(rule['pattern'], i['errorDetails'])]:
+            claim(fail, rules['reason'])
