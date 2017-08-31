@@ -61,7 +61,9 @@ def fetch_all_reports(job=None, build=None):
 
 
 def parse_fails(bld):
-    return([i for i in bld if (i['status'] == "FAILED" or i['status'] == "ERROR" or i['status'] == "REGRESSION")])
+    if not bld:
+        bld = []
+    return([i for i in bld if (i.get('status') == "FAILED" or i.get('status') == "ERROR" or i.get('status') == "REGRESSION")])
 
 # fetch_test_report(config['url'], config['job'], config['bld'])
 # fetch the failed tests with claim reasons
