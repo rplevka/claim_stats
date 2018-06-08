@@ -38,9 +38,22 @@ PARAMS = {
 ep = [u'ui', u'api', u'cli']
 
 
-def fetch_test_report(url, job, build):
+def fetch_test_report(url=None, job=None, build=None, build_url=None):
+    '''fetches the test report for a given jenkins url, job and build
+    or a given complete build url
+    Usage:
+        fetch_test_report(url=jenkins_url, job=job_name, build=build_id)
+        or
+        fetch_test_report(build_url=fullbuildurl)
+    Returns:
+        a List of test dicts
+    '''
+    if build_url is None:
+        if not(url and job and build):
+            raise TypeError('fetch_test_report requires either url+job+build or build_url params')
+        build_url = u'{0}/job/{1}/{2}'.format(url, job, build)
     bld_req = requests.get(
-        u'{0}/job/{1}/{2}/testReport/api/json'.format(url, job, build),
+        build_url+'/testReport/api/json',
         auth=requests.auth.HTTPBasicAuth(
             config['usr'],
             config['pwd']
@@ -54,7 +67,7 @@ def fetch_test_report(url, job, build):
         for c in cases:
             className = c['className'].split('.')[-1]
             testPath = '.'.join(c['className'].split('.')[:-1])
-            c['url'] = u'{0}/job/{1}/{2}/testReport/junit/{3}/{4}/{5}'.format(url, job, build, testPath, className, c['name'])
+            c['url'] = u'{0}/testReport/junit/{1}/{2}/{3}'.format(build_url, testPath, className, c['name'])
 
         return(cases)
 
@@ -177,7 +190,7 @@ def claim(test, reason, sticky=False, propagate=False):
 
     :param sticky: whether to make the claim sticky (False by default)
     '''
-    logging.info('claiming {0} with reason: {1}'.format(test, reason))
+    logging.info('claiming {0} with reason: {1}'.format(test['url'], reason))
     claim_req = requests.post(
         u'{0}/claim/claim'.format(test['url']),
         auth=requests.auth.HTTPBasicAuth(
@@ -197,6 +210,6 @@ def claim(test, reason, sticky=False, propagate=False):
 def claim_by_rules(fails, rules, dryrun=False):
     for rule in rules:
         for fail in [i for i in fails if re.search(rule['pattern'], i['errorDetails'])]:
-            logging.info(u'{0} matching pattern: {1} url: {2}'.format(fail['name'], rule['pattern'], fail['url']))
+            logging.debug(u'{0} matching pattern: {1} url: {2}'.format(fail['name'], rule['pattern'], fail['url']))
             if not dryrun:
                 claim(fail, rule['reason'])
