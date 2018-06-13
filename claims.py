@@ -156,9 +156,9 @@ def parse_reasons(fails, fallback=False):
     reasons = {}
     for f in fails:
         if(fallback and not f['testActions'][0]['reason']):
-            reason = unicode(f.get('errorDetails'))
+            reason = f.get('errorDetails')
         else:
-            reason = unicode(f['testActions'][0]['reason'])
+            reason = f['testActions'][0]['reason']
         if reasons.get(reason):
             reasons[reason] += 1
         else:
@@ -194,8 +194,8 @@ def claim(test, reason, sticky=False, propagate=False):
     claim_req = requests.post(
         u'{0}/claim/claim'.format(test['url']),
         auth=requests.auth.HTTPBasicAuth(
-            unicode(config['usr']),
-            unicode(config['pwd'])
+            config['usr'],
+            config['pwd']
         ),
         data={u'json': u'{{"assignee": "", "reason": "{0}", "sticky": {1}, "propagateToFollowingBuilds": {2}}}'.format(reason, sticky, propagate)},
         headers=headers,
