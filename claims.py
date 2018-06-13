@@ -75,12 +75,12 @@ def fetch_test_report(url=None, job=None, build=None, build_url=None):
 def fetch_all_reports(job=None, build=None):
     if 'DEBUG_CLAIMS_CACHE' in os.environ:
         if os.path.isfile(os.environ['DEBUG_CLAIMS_CACHE']):
-            print "DEBUG: Because environment variable DEBUG_CLAIMS_CACHE is set to '{0}', loading data from there".format(
-                os.environ['DEBUG_CLAIMS_CACHE'])
+            print("DEBUG: Because environment variable DEBUG_CLAIMS_CACHE is set to '{0}', loading data from there".format(
+                os.environ['DEBUG_CLAIMS_CACHE']))
             return pickle.load(open(os.environ['DEBUG_CLAIMS_CACHE'], 'r'))
         else:
-            print "DEBUG: Environment variable DEBUG_CLAIMS_CACHE set to '{0}' but that file does not exist, creating one".format(
-                os.environ['DEBUG_CLAIMS_CACHE'])
+            print("DEBUG: Environment variable DEBUG_CLAIMS_CACHE set to '{0}' but that file does not exist, creating one".format(
+                os.environ['DEBUG_CLAIMS_CACHE']))
 
     if job is None:
         job = config['job']
