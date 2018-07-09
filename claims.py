@@ -72,7 +72,7 @@ class ForemanDebug(object):
         return self._extracted
 
     def _download_file(self, localfile, url):
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, verify=False)
         for chunk in r.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 localfile.write(chunk)
@@ -196,7 +196,8 @@ class Case(collections.UserDict):
         if 'field' in rule and 'pattern' in rule:
             # This is simple rule, we can just check regexp against given field and we are done
             try:
-                out = re.search(rule['pattern'], self[rule['field']]) is not None
+                field = '' if self[rule['field']] is None else self[rule['field']]
+                out = re.search(rule['pattern'], field) is not None
                 logging.debug("%s=> %s" % (" "*indentation, out))
                 return out
             except KeyError:
